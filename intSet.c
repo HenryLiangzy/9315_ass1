@@ -3,14 +3,16 @@
 #include "fmgr.h"
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
 
-#include "string.h"
-#include "ctype.h"
+#include <stdio.h>
+#include <ctype.h>
 
 PG_MODULE_MAGIC;
 
 typedef struct intSet
 {
     /* data */
+    int length;
+    int *array;
 }intSet;
 
 
