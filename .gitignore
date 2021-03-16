@@ -6,3 +6,7 @@
 
 # for c complie
 *.out
+
+# remove test file
+test.*
+test*
