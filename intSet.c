@@ -8,12 +8,12 @@
 
 PG_MODULE_MAGIC;
 
-typedef struct intSet
+typedef struct intset
 {
     /* data */
     int length;
     int *array;
-}intSet;
+}intset;
 
 
 PG_FUNCTION_INFO_V1(intset_in):
@@ -21,7 +21,7 @@ PG_FUNCTION_INFO_V1(intset_in):
 Datum
 inset_in(PG_FUNCTION_ARGS){
     char *str = PG_GETARG_CSTRING(0);
-    intSet *result;
+    intset *result;
 }
 
 PG_FUNCTION_INFO_V1(intset_out):
