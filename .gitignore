@@ -3,3 +3,6 @@
 
 # for vscode
 .vscode/
+
+# for c complie
+*.out
