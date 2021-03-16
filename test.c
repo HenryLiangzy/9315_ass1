@@ -1,5 +1,9 @@
-#include "stdio.h"
+#include <stdio.h>
 
 int main(){
-    printf("%d\n", __INT_MAX__);
+    if (1)
+    {
+        printf("Hellow world\n");
+    }
+    
 }

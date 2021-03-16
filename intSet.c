@@ -6,14 +6,17 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#define TRUE 1
+#define FALSE 0
+
 PG_MODULE_MAGIC;
 
-typedef struct intset
+typedef struct intSet
 {
     /* data */
     int length;
     int *array;
-}intset;
+}intSet;
 
 
 PG_FUNCTION_INFO_V1(intset_in):
@@ -21,7 +24,7 @@ PG_FUNCTION_INFO_V1(intset_in):
 Datum
 inset_in(PG_FUNCTION_ARGS){
     char *str = PG_GETARG_CSTRING(0);
-    intset *result;
+    intSet *result;
 }
 
 PG_FUNCTION_INFO_V1(intset_out):
