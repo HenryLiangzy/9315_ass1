@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 int main(){
-    if (1)
-    {
-        printf("Hellow world\n");
-    }
+    char str[80] = "This is - www.runoob.com - website";
+    const char s[2] = "-";
+    char *token;
+
     
 }
