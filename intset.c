@@ -39,8 +39,8 @@ void merge(int *arr, int l, int m, int r){
     int n1 = m - l + 1;
     int n2 = r - m;
 
-    int left[n1];
-    int right[n2];
+    int *left = (int *)palloc(VARHDRSZ * n1);
+    int *right = (int *)palloc(VARHDRSZ * n2);
 
     //copy
     for(i = 0; i < n1; i++){
@@ -79,6 +79,9 @@ void merge(int *arr, int l, int m, int r){
         j++;
         k++;
     }
+
+    pfree(left);
+    pfree(right);
 }
 
 void mergeSort(int *arr, int l, int r){
