@@ -39,7 +39,8 @@ void merge(int *arr, int l, int m, int r){
     int n1 = m - l + 1;
     int n2 = r - m;
 
-    int left[m - l + 1], right[r - m];
+    int left[n1];
+    int right[n2];
 
     //copy
     for(i = 0; i < n1; i++){
@@ -123,6 +124,12 @@ inset_in(PG_FUNCTION_ARGS){
     char *str = PG_GETARG_CSTRING(0);
     intSet *result = NULL;
 
+    char delim[5] = "{, }";
+    char *substring = NULL;
+    int input_len = strlen(str);
+    int *temp = NULL;
+    int size_count = 1;
+
     // input string check
     if(check_valid(str) == 0){
         ereport(ERROR,
@@ -131,14 +138,9 @@ inset_in(PG_FUNCTION_ARGS){
 						"intSet", str)));
     }
 
-    char delim[5] = "{, }";
-    char *substring = NULL;
-
-    int input_len = strlen(str);
+    
     substring = strtok(str, delim);
-
-    int *temp = palloc(VARHDRSZ*input_len);
-    int size_count = 1;
+    temp = palloc(VARHDRSZ*input_len);
     while(substring != NULL){
         temp[size_count] = atoi(substring);
         substring = strtok(NULL, delim);
@@ -152,7 +154,7 @@ inset_in(PG_FUNCTION_ARGS){
     // an array length (int32) + array (len * int32)
     result = (intSet *)palloc(VARHDRSZ + VARHDRSZ * size_count);
     SET_VARSIZE(result, VARHDRSZ + VARHDRSZ * size_count);
-    result->array_size = size_count
+    result->array_size = size_count;
     for (int i = 0; i < size_count; i++){
         result->array[i] = temp[i];
     }
@@ -175,13 +177,13 @@ inset_out(PG_FUNCTION_ARGS){
     
     // concate the first byte
     strcat(result, "{");
-    sprintf(number_str, "%d", array[0]);
+    sprintf(number_str, "%d", int_set->array[0]);
     strcat(result, number_str);
 
     //concate later string
     for (int i = 1; i < int_set->array_size; i++){
         strcat(result, ", ");
-        sprintf(number_str, "%d", array[i]);
+        sprintf(number_str, "%d", int_set->array[i]);
         number_len = strlen(number_str);
         if(strlen(result) + number_len >= available_len){
             result = realloc(result, available_len + 512);
