@@ -10,3 +10,6 @@
 # remove test file
 test.*
 test*
+
+# for idea
+.idea/
