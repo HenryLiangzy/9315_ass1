@@ -11,13 +11,22 @@
 #define TRUE 1
 #define FALSE 0
 
+
+/**
+ * Declare
+*/
+void merge(int *arr, int l, int m, int r);
+void mergeSort(int *arr, int l, int r);
+int check_valid(char *str);
+
+
 PG_MODULE_MAGIC;
 
 typedef struct intSet
 {
     int32 length;
-    int32 array[FLEXIBLE_ARRAY_MEMBER];
     int array_size;
+    int array[FLEXIBLE_ARRAY_MEMBER];
 }intSet;
 
 
@@ -30,7 +39,7 @@ void merge(int *arr, int l, int m, int r){
     int n1 = m - l + 1;
     int n2 = r - m;
 
-    int left[n1], right[n2];
+    int left[m - l + 1], right[r - m];
 
     //copy
     for(i = 0; i < n1; i++){
@@ -106,7 +115,7 @@ int check_valid(char *str){
  * Input/Output functions
  *****************************************************************************/
 
-PG_FUNCTION_INFO_V1(intset_in):
+PG_FUNCTION_INFO_V1(intset_in);
 
 Datum
 inset_in(PG_FUNCTION_ARGS){
@@ -153,7 +162,7 @@ inset_in(PG_FUNCTION_ARGS){
     PG_RETURN_POINTER(result);
 }
 
-PG_FUNCTION_INFO_V1(intset_out):
+PG_FUNCTION_INFO_V1(intset_out);
 
 Datum
 inset_out(PG_FUNCTION_ARGS){

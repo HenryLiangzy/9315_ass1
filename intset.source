@@ -53,7 +53,7 @@ CREATE FUNCTION intSet_out(intSet)
 CREATE TYPE intset (
    internallength = variable,
    input = intset_in,
-   output = intset_out,
+   output = intset_out
 );
 
 
