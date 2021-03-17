@@ -21,10 +21,25 @@ typedef struct intSet
 
 
 /**
- * Link list structure function below
+ * Structure function below
 */
 
+int check_valid(char *str){
+    int flag = 1;
+    int str_len = strlen(str);
 
+    // first check the head and tail
+    if(str[0] != '{' && str[str_len-1] != '}'){
+        flag = 0;
+        return flag;
+    }
+
+    for (int i = 0; i < str_len; i++){
+        /* code */
+    }
+    
+    return flag;
+}
 
 
 /*****************************************************************************
@@ -37,10 +52,18 @@ Datum
 inset_in(PG_FUNCTION_ARGS){
     //input string
     char *str = PG_GETARG_CSTRING(0);
-    intSet *result;
+    intSet *result = NULL;
+
+    // input string check
+    if(check_valid(str) == 0){
+        ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"intSet", str)));
+    }
 
     char delim[5] = "{, }";
-    char *substring;
+    char *substring = NULL;
 
     int input_len = strlen(str);
     substring = strtok(str, delim);
@@ -50,6 +73,7 @@ inset_in(PG_FUNCTION_ARGS){
     while(substring != NULL){
         temp[size] = atoi(substring);
         substring = strtok(NULL, delim);
+        size++;
     }
 
     for (int i = 0; i < size; i++){
