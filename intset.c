@@ -122,7 +122,7 @@ int check_valid(char *str){
 PG_FUNCTION_INFO_V1(intset_in);
 
 Datum
-inset_in(PG_FUNCTION_ARGS){
+intset_in(PG_FUNCTION_ARGS){
     //input string
     char *str = PG_GETARG_CSTRING(0);
     intSet *result = NULL;
@@ -131,7 +131,7 @@ inset_in(PG_FUNCTION_ARGS){
     char *substring = NULL;
     int input_len = strlen(str);
     int *temp = NULL;
-    int size_count = 1;
+    int size_count = 0;
 
     // input string check
     if(check_valid(str) == 0){
@@ -155,13 +155,17 @@ inset_in(PG_FUNCTION_ARGS){
 
     // allocate memory for result pointer and save data
     // an array length (int32) + array (len * int32)
-    result = (intSet *)palloc(VARHDRSZ + VARHDRSZ * size_count);
-    SET_VARSIZE(result, VARHDRSZ + VARHDRSZ * size_count);
+    result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * size_count);
+    SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * size_count);
     result->array_size = size_count;
     for (int i = 0; i < size_count; i++){
         result->array[i] = temp[i];
     }
 
+    elog(INFO, "size is %d", result->array_size);
+    for(int x=0; x<size_count;x++){
+        elog(INFO, " <%d>", result->array[x]);
+    }
     //free and return
     pfree(temp);
     PG_RETURN_POINTER(result);
@@ -170,29 +174,35 @@ inset_in(PG_FUNCTION_ARGS){
 PG_FUNCTION_INFO_V1(intset_out);
 
 Datum
-inset_out(PG_FUNCTION_ARGS){
+intset_out(PG_FUNCTION_ARGS){
     intSet *int_set = (intSet *) PG_GETARG_POINTER(0);
 
-    int available_len = int_set->array_size * 8;
     int number_len = 0;
     char number_str[32];
-    char *result = (char *)palloc(available_len + 2);
+    char *result = NULL;
+
+    elog(INFO, "there are %d in set: ", int_set->array_size);
+
+    for (int i = 0; i < int_set->array_size; i++){
+        sprintf(number_str, "%d", int_set->array[i]);
+        number_len = number_len + strlen(number_str) + 1;
+    }
+    
+    result = (char *)palloc(number_len + 8);
+    result[0] = '\0';
     
     // concate the first byte
     strcat(result, "{");
     sprintf(number_str, "%d", int_set->array[0]);
     strcat(result, number_str);
+    elog(INFO, "<%s>", result);
 
     //concate later string
     for (int i = 1; i < int_set->array_size; i++){
-        strcat(result, ", ");
+        strcat(result, ",");
         sprintf(number_str, "%d", int_set->array[i]);
-        number_len = strlen(number_str);
-        if(strlen(result) + number_len >= available_len){
-            result = realloc(result, available_len + 512);
-            available_len = available_len + 512;
-        }
         strcat(result, number_str);
+        elog(INFO, "<%s>", result);
     }
     
     //end

@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------
 --
--- complex.sql-
+-- intset.sql-
 --    This file shows how to create a new user-defined type and how to
 --    use this new type.
 --
@@ -66,7 +66,7 @@ CREATE TYPE intset (
 
 -- first, define the required operators
 CREATE FUNCTION intset_eq(intSet, intSet) RETURNS bool
-   AS '_OBJWD_/complex' LANGUAGE C IMMUTABLE STRICT;
+   AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
 
 
 CREATE OPERATOR = (
