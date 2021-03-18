@@ -132,6 +132,8 @@ intset_in(PG_FUNCTION_ARGS){
     int input_len = strlen(str);
     int *temp = NULL;
     int size_count = 0;
+    int temp_num = 0;
+    int flag = 1;
 
     // input string check
     if(check_valid(str) == 0){
@@ -145,9 +147,29 @@ intset_in(PG_FUNCTION_ARGS){
     substring = strtok(str, delim);
     temp = palloc(VARHDRSZ*input_len);
     while(substring != NULL){
-        temp[size_count] = atoi(substring);
+        temp_num = atoi(substring);
+
+        //check if exist
+        for(int j = 0; j < size_count; j++){
+            if(temp[j] == temp_num){
+                flag = 0;
+                break;
+            }
+        }
+        
+        // if not exist
+        if(flag == 1){
+            temp[size_count] = temp_num;
+            size_count++;
+        }
+        else{
+            // recerse flag and do nothing
+            flag = 1;
+        }
+
+        // for next loop
         substring = strtok(NULL, delim);
-        size_count++;
+        
     }
 
     // sort the array
@@ -189,6 +211,8 @@ intset_out(PG_FUNCTION_ARGS){
     }
     
     result = (char *)palloc(number_len + 8);
+
+    // init string
     result[0] = '\0';
     
     // concate the first byte
@@ -207,6 +231,7 @@ intset_out(PG_FUNCTION_ARGS){
     
     //end
     strcat(result, "}");
+    // result[number_len+1] = '\0';
     PG_RETURN_CSTRING(psprintf("%s", result));
 }
 
