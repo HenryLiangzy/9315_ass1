@@ -132,8 +132,8 @@ intset_in(PG_FUNCTION_ARGS){
     int input_len = strlen(str);
     int *temp = NULL;
     int size_count = 0;
-    int temp_num = 0;
-    int flag = 1;
+    int *final_array = NULL;
+    int final_array_size = 1;
 
     // input string check
     if(check_valid(str) == 0){
@@ -143,53 +143,47 @@ intset_in(PG_FUNCTION_ARGS){
 						"intSet", str)));
     }
 
-    
+    // load the data from string
     substring = strtok(str, delim);
-    temp = palloc(VARHDRSZ*input_len);
+    temp = (int *)palloc(VARHDRSZ*input_len);
     while(substring != NULL){
-        temp_num = atoi(substring);
-
-        //check if exist
-        for(int j = 0; j < size_count; j++){
-            if(temp[j] == temp_num){
-                flag = 0;
-                break;
-            }
-        }
-        
-        // if not exist
-        if(flag == 1){
-            temp[size_count] = temp_num;
-            size_count++;
-        }
-        else{
-            // recerse flag and do nothing
-            flag = 1;
-        }
-
-        // for next loop
+        temp[size_count] = atoi(substring);
         substring = strtok(NULL, delim);
-        
+        size_count++;
     }
 
-    // sort the array
+    // sort and resize the array
     mergeSort(temp, 0, size_count-1);
+    
+    final_array = (int *)palloc(VARHDRSZ * size_count);
+    final_array[0] = temp[0];
+    for(int i = 1; i < size_count; i++){
+        if(temp[i] <= final_array[final_array_size-1]){
+            continue;
+        }
+        else{
+            final_array[final_array_size] = temp[i];
+            final_array_size++;
+        }
+    }
+    pfree(temp);
 
     // allocate memory for result pointer and save data
     // an array length (int32) + array (len * int32)
-    result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * size_count);
-    SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * size_count);
-    result->array_size = size_count;
-    for (int i = 0; i < size_count; i++){
-        result->array[i] = temp[i];
+    result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * final_array_size);
+    SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * final_array_size);
+    result->array_size = final_array_size;
+    for (int i = 0; i < final_array_size; i++){
+        result->array[i] = final_array[i];
     }
 
     elog(INFO, "size is %d", result->array_size);
     for(int x=0; x<size_count;x++){
         elog(INFO, " <%d>", result->array[x]);
     }
+
     //free and return
-    pfree(temp);
+    pfree(final_array);
     PG_RETURN_POINTER(result);
 }
 
