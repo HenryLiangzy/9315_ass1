@@ -68,6 +68,9 @@ CREATE TYPE intset (
 CREATE FUNCTION intset_eq(intSet, intSet) RETURNS bool
    AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION intset_noteq(intSet, intSet) RETURNS bool
+   AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
+
 CREATE FUNCTION intset_cardinality(intSet) RETURNS integer
    AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
 
@@ -83,6 +86,10 @@ CREATE FUNCTION intset_subset(intSet, intSet) RETURNS bool
 
 CREATE OPERATOR = (
    leftarg = intSet, rightarg = intSet, procedure = intset_eq
+);
+
+CREATE OPERATOR <> (
+   leftarg = intSet, rightarg = intSet, procedure = intset_noteq
 );
 
 CREATE OPERATOR # (

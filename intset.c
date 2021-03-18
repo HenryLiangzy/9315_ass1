@@ -350,6 +350,32 @@ intset_eq(PG_FUNCTION_ARGS)
 }
 
 
+PG_FUNCTION_INFO_V1(intset_noteq);
+
+Datum
+intset_noteq(PG_FUNCTION_ARGS)
+{
+	intSet *a = (intSet *) PG_GETARG_POINTER(0);
+	intSet *b = (intSet *) PG_GETARG_POINTER(1);
+
+    int flag = 0;
+
+    if(a->array_size != b->array_size){
+        flag = 1;
+    }
+    else{
+        for (int i = 0; i < a->array_size; i++){
+            if (a->array[i] != b->array[i]){
+                flag = 1;
+                break;
+            }
+        }
+    }
+
+	PG_RETURN_BOOL(flag);
+}
+
+
 PG_FUNCTION_INFO_V1(intset_cardinality);
 Datum
 intset_cardinality(PG_FUNCTION_ARGS)
