@@ -98,20 +98,87 @@ void mergeSort(int *arr, int l, int r){
 }
 
 int check_valid(char *str){
-    int flag = 1;
     int str_len = strlen(str);
+    int flag = 0;
+    int comma_flag = 1;
+    int number_flag = 0;
+    int bracket[2] = {0, 0};
 
     // first check the head and tail
-    if(str[0] != '{' && str[str_len-1] != '}'){
-        flag = 0;
-        return flag;
+    for(int i = 0; i < str_len; i++){
+
+        // check bracket
+        if(str[i] == '{'){
+            bracket[0]++;
+        }
+        else if(str[i] == '}'){
+            bracket[1]++;
+        }
+
+        // check invalid character
+        if(str[i] != ' ' && str[i] != ',' && str[i] != '{' && str[i] != '}' && !isdigit(str[i])){
+            printf("invalid character!\n");
+            return 0;
+        }
+
+        // check is digit
+        if(isdigit(str[i])){
+            // when the digit is the last char
+            if(i + 1 ==  str_len){
+                printf("number should not be the last digit!\n");
+                return 0;
+            }
+            else{
+                //if next digit still a number
+                if(isdigit(str[i+1])){
+                    continue;
+                }
+                //current number finish
+                else{
+                    // if current number did not have comma before
+                    if(comma_flag != 1){
+                        printf("loose a comma before!\n");
+                        return 0;
+                    }
+                    // is valid number, hence reverse comma flag and mark number flag
+                    else{
+                        flag = 1;
+                        number_flag = 1;
+                        comma_flag = 0;
+                    }
+                }
+            }
+        }
+        // if is comma, check pervious number or space
+        else if(str[i] == ','){
+            // if no number detect before
+            if(number_flag != 1){
+                printf("No number detect before!\n");
+                return 0;
+            }
+            //valid comma, reverse comma and number
+            else{
+                number_flag = 0;
+                comma_flag = 1;
+            }
+        }
+
+        // means when the string ending
+        else if(str[i] == '}'){
+            if(comma_flag == 1 && flag == 1){
+                return 0;
+            }
+        }
     }
 
-    // for (int i = 0; i < str_len; i++){
-    //     /* code */
-    // }
-    
-    return flag;
+    // if the bracket not semi
+    if(bracket[0] != 1 || bracket[1] != 1){
+        printf("bracket is invalid\n");
+        return 0;
+    }
+
+    // pass all the check, is valid number
+    return 1;
 }
 
 
@@ -152,38 +219,53 @@ intset_in(PG_FUNCTION_ARGS){
         size_count++;
     }
 
-    // sort and resize the array
-    mergeSort(temp, 0, size_count-1);
-    
-    final_array = (int *)palloc(VARHDRSZ * size_count);
-    final_array[0] = temp[0];
-    for(int i = 1; i < size_count; i++){
-        if(temp[i] <= final_array[final_array_size-1]){
-            continue;
-        }
-        else{
-            final_array[final_array_size] = temp[i];
-            final_array_size++;
-        }
-    }
-    pfree(temp);
+    // check if nothing in the string
+    if(size_count == 0){
+        pfree(temp);
 
-    // allocate memory for result pointer and save data
-    // an array length (int32) + array (len * int32)
-    result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * final_array_size);
-    SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * final_array_size);
-    result->array_size = final_array_size;
-    for (int i = 0; i < final_array_size; i++){
-        result->array[i] = final_array[i];
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * 2);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * 2);
+
+        result->array_size = 0;
+        result->array[0] = -1;
+
+    }
+    else{
+        // sort and resize the array
+        mergeSort(temp, 0, size_count-1);
+        
+        final_array = (int *)palloc(VARHDRSZ * size_count);
+        final_array[0] = temp[0];
+        for(int i = 1; i < size_count; i++){
+            if(temp[i] <= final_array[final_array_size-1]){
+                continue;
+            }
+            else{
+                final_array[final_array_size] = temp[i];
+                final_array_size++;
+            }
+        }
+
+        pfree(temp);
+
+        // allocate memory for result pointer and save data
+        // an array length (int32) + array (len * int32)
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * final_array_size);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * final_array_size);
+        result->array_size = final_array_size;
+        for (int i = 0; i < final_array_size; i++){
+            result->array[i] = final_array[i];
+        }
+
+        pfree(final_array);
     }
 
-    elog(INFO, "size is %d", result->array_size);
-    for(int x=0; x<size_count;x++){
-        elog(INFO, " <%d>", result->array[x]);
-    }
+    // elog(INFO, "size is %d", result->array_size);
+    // for(int x=0; x<size_count;x++){
+    //     elog(INFO, " <%d>", result->array[x]);
+    // }
 
     //free and return
-    pfree(final_array);
     PG_RETURN_POINTER(result);
 }
 
@@ -197,34 +279,41 @@ intset_out(PG_FUNCTION_ARGS){
     char number_str[32];
     char *result = NULL;
 
-    elog(INFO, "there are %d in set: ", int_set->array_size);
-
-    for (int i = 0; i < int_set->array_size; i++){
-        sprintf(number_str, "%d", int_set->array[i]);
-        number_len = number_len + strlen(number_str) + 1;
+    if (int_set->array_size == 0){
+        result = (char *)palloc(sizeof(char) * 3);
+        result[0] = '\0';
+        strcat(result, "{}");
     }
-    
-    result = (char *)palloc(number_len + 8);
+    else{
+        // elog(INFO, "there are %d in set: ", int_set->array_size);
 
-    // init string
-    result[0] = '\0';
-    
-    // concate the first byte
-    strcat(result, "{");
-    sprintf(number_str, "%d", int_set->array[0]);
-    strcat(result, number_str);
-    elog(INFO, "<%s>", result);
+        for (int i = 0; i < int_set->array_size; i++){
+            sprintf(number_str, "%d", int_set->array[i]);
+            number_len = number_len + strlen(number_str) + 1;
+        }
+        
+        result = (char *)palloc(number_len + 8);
 
-    //concate later string
-    for (int i = 1; i < int_set->array_size; i++){
-        strcat(result, ",");
-        sprintf(number_str, "%d", int_set->array[i]);
+        // init string
+        result[0] = '\0';
+        
+        // concate the first byte
+        strcat(result, "{");
+        sprintf(number_str, "%d", int_set->array[0]);
         strcat(result, number_str);
-        elog(INFO, "<%s>", result);
+        // elog(INFO, "<%s>", result);
+
+        //concate later string
+        for (int i = 1; i < int_set->array_size; i++){
+            strcat(result, ",");
+            sprintf(number_str, "%d", int_set->array[i]);
+            strcat(result, number_str);
+            // elog(INFO, "<%s>", result);
+        }
+        
+        //end
+        strcat(result, "}");
     }
-    
-    //end
-    strcat(result, "}");
     // result[number_len+1] = '\0';
     PG_RETURN_CSTRING(psprintf("%s", result));
 }
