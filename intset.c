@@ -349,6 +349,7 @@ intset_eq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(flag);
 }
 
+
 PG_FUNCTION_INFO_V1(intset_cardinality);
 Datum
 intset_cardinality(PG_FUNCTION_ARGS)
@@ -356,4 +357,51 @@ intset_cardinality(PG_FUNCTION_ARGS)
     intSet *input = (intSet *) PG_GETARG_POINTER(0);
 
     PG_RETURN_INT32(input->array_size);
+}
+
+
+PG_FUNCTION_INFO_V1(intset_contain);
+Datum
+intset_contain(PG_FUNCTION_ARGS)
+{
+    int32 number = PG_GETARG_INT32(0);
+    intSet *int_set = (intSet *) PG_GETARG_POINTER(1);
+
+    int flag = 0;
+
+    for (int i = 0; i < int_set->array_size; i++){
+        if(int_set->array[i] == number){
+            flag = 1;
+            break;
+        }
+    }
+
+    PG_RETURN_BOOL(flag);
+}
+
+
+PG_FUNCTION_INFO_V1(intset_superset);
+Datum
+intset_superset(PG_FUNCTION_ARGS)
+{
+    intSet *a = (intSet *) PG_GETARG_POINTER(0);
+    intSet *b = (intSet *) PG_GETARG_POINTER(1);
+
+    int result = 1;
+
+    for (int i = 0; i < b->array_size; i++){
+        int flag = 0;
+        for (int j = 0; j < a->array_size; j++){
+            if(b->array[i] == a->array[j]){
+                flag = 1;
+            }
+        }
+
+        if(flag != 1){
+            result = 0;
+            break;
+        }    
+    }
+
+    PG_RETURN_BOOL(result);
 }
