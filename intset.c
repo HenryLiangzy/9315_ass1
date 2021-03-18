@@ -348,3 +348,12 @@ intset_eq(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(flag);
 }
+
+PG_FUNCTION_INFO_V1(intset_cardinality);
+Datum
+intset_cardinality(PG_FUNCTION_ARGS)
+{
+    intSet *input = (intSet *) PG_GETARG_POINTER(0);
+
+    PG_RETURN_INT32(input->array_size);
+}

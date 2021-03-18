@@ -64,16 +64,19 @@ CREATE TYPE intset (
 --      functions, then we can make the operator class.
 -----------------------------
 
--- first, define the required operators
+
 CREATE FUNCTION intset_eq(intSet, intSet) RETURNS bool
+   AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION intset_cardinality(intSet) RETURNS integer
    AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
 
 
 CREATE OPERATOR = (
-   leftarg = intSet, rightarg = intSet, procedure = intset_eq,
-   commutator = = ,
-   -- leave out negator since we didn't create <> operator
-   -- negator = <> ,
-   restrict = eqsel, join = eqjoinsel
+   leftarg = intSet, rightarg = intSet, procedure = intset_eq
+);
+
+CREATE OPERATOR # (
+   rightarg = intSet, procedure = intset_cardinality
 );
 
