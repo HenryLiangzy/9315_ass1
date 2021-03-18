@@ -405,3 +405,30 @@ intset_superset(PG_FUNCTION_ARGS)
 
     PG_RETURN_BOOL(result);
 }
+
+
+PG_FUNCTION_INFO_V1(intset_subset);
+Datum
+intset_subset(PG_FUNCTION_ARGS)
+{
+    intSet *a = (intSet *) PG_GETARG_POINTER(0);
+    intSet *b = (intSet *) PG_GETARG_POINTER(1);
+
+    int result = 1;
+
+    for (int i = 0; i < a->array_size; i++){
+        int flag = 0;
+        for (int j = 0; j < b->array_size; j++){
+            if(a->array[i] == b->array[j]){
+                flag = 1;
+            }
+        }
+
+        if(flag != 1){
+            result = 0;
+            break;
+        }    
+    }
+
+    PG_RETURN_BOOL(result);
+}

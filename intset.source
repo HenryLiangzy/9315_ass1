@@ -77,6 +77,9 @@ CREATE FUNCTION intset_contain(integer, intSet) RETURNS bool
 CREATE FUNCTION intset_superset(intSet, intSet) RETURNS bool
    AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION intset_subset(intSet, intSet) RETURNS bool
+   AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
+
 
 CREATE OPERATOR = (
    leftarg = intSet, rightarg = intSet, procedure = intset_eq
@@ -92,4 +95,8 @@ CREATE OPERATOR ? (
 
 CREATE OPERATOR >@ (
    leftarg = intSet, rightarg = intSet, procedure = intset_superset
+);
+
+CREATE OPERATOR @< (
+   leftarg = intSet, rightarg = intSet, procedure = intset_subset
 );
