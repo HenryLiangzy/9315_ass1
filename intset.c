@@ -610,6 +610,7 @@ intset_union(PG_FUNCTION_ARGS)
         b_index = 0;
 
         while(a_index < a->array_size && b_index < b->array_size){
+            // elog(INFO, "while loop: num%d", num_count);
             //when equal
             if(a->array[a_index] == b->array[b_index]){
                 temp[num_count] = a->array[a_index];
@@ -625,7 +626,8 @@ intset_union(PG_FUNCTION_ARGS)
                 a_index++;
             }
 
-            else if(a->array[a_index] < b->array[b_index]){
+            //if b smaller
+            else if(a->array[a_index] > b->array[b_index]){
                 temp[num_count] = b->array[b_index];
                 num_count++;
                 b_index++;
@@ -642,12 +644,16 @@ intset_union(PG_FUNCTION_ARGS)
             
         }
         else if(a_index == a->array_size && b_index < b->array_size){
-            while (b_index < b->array[b_index]){
+            while (b_index < b->array_size){
                 temp[num_count] = b->array[b_index];
                 num_count++;
                 b_index++;
+                // elog(INFO, "temp_index %d, b_index %d", num_count-1, b_index-1);
+                // elog(INFO, "b remain add %d", temp[num_count-1]);
             }
         }
+
+        // elog(INFO, "num count:%d", num_count);
 
         // load to result
         result = (intSet *) palloc(VARHDRSZ * 2 + VARHDRSZ * num_count);
@@ -656,6 +662,7 @@ intset_union(PG_FUNCTION_ARGS)
         result->array_size = num_count;
         for(int i = 0; i < num_count; i++){
             result->array[i] = temp[i];
+            // elog(INFO, "result: %d", result->array[i]);
         }
 
         pfree(temp);

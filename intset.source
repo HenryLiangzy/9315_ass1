@@ -89,6 +89,9 @@ CREATE FUNCTION intset_intersect(intSet, intSet) RETURNS intSet
 CREATE FUNCTION intset_union(intSet, intSet) RETURNS intSet
    AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION intset_disjunction(intSet, intSet) RETURNS intSet
+   AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
+
 
 CREATE OPERATOR = (
    leftarg = intSet, rightarg = intSet, procedure = intset_eq
@@ -120,4 +123,8 @@ CREATE OPERATOR && (
 
 CREATE OPERATOR || (
    leftarg = intSet, rightarg = intSet, procedure = intset_union
+);
+
+CREATE OPERATOR !! (
+   leftarg = intSet, rightarg = intSet, procedure = intset_disjunction
 );
