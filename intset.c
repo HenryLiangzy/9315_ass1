@@ -318,11 +318,7 @@ intset_out(PG_FUNCTION_ARGS){
     PG_RETURN_CSTRING(psprintf("%s", result));
 }
 
-/*****************************************************************************
- * New Operators
- *
- * A practical Complex datatype would provide much more than this, of course.
- *****************************************************************************/
+
 
 PG_FUNCTION_INFO_V1(intset_eq);
 
@@ -747,7 +743,7 @@ intset_disjunction(PG_FUNCTION_ARGS)
             }
         }
 
-        elog(INFO, "temp len %d, num account %d", temp_len, num_count);
+        // elog(INFO, "temp len %d, num account %d", temp_len, num_count);
         
         // save to result
         result = (intSet *) palloc(VARHDRSZ * 2 + VARHDRSZ * num_count);
