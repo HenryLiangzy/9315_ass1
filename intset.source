@@ -83,6 +83,12 @@ CREATE FUNCTION intset_superset(intSet, intSet) RETURNS bool
 CREATE FUNCTION intset_subset(intSet, intSet) RETURNS bool
    AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION intset_intersect(intSet, intSet) RETURNS intSet
+   AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION intset_union(intSet, intSet) RETURNS intSet
+   AS '_OBJWD_/intset' LANGUAGE C IMMUTABLE STRICT;
+
 
 CREATE OPERATOR = (
    leftarg = intSet, rightarg = intSet, procedure = intset_eq
@@ -106,4 +112,12 @@ CREATE OPERATOR >@ (
 
 CREATE OPERATOR @< (
    leftarg = intSet, rightarg = intSet, procedure = intset_subset
+);
+
+CREATE OPERATOR && (
+   leftarg = intSet, rightarg = intSet, procedure = intset_intersect
+);
+
+CREATE OPERATOR || (
+   leftarg = intSet, rightarg = intSet, procedure = intset_union
 );

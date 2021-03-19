@@ -377,6 +377,7 @@ intset_noteq(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(intset_cardinality);
+
 Datum
 intset_cardinality(PG_FUNCTION_ARGS)
 {
@@ -387,6 +388,7 @@ intset_cardinality(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(intset_contain);
+
 Datum
 intset_contain(PG_FUNCTION_ARGS)
 {
@@ -407,6 +409,7 @@ intset_contain(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(intset_superset);
+
 Datum
 intset_superset(PG_FUNCTION_ARGS)
 {
@@ -434,6 +437,7 @@ intset_superset(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(intset_subset);
+
 Datum
 intset_subset(PG_FUNCTION_ARGS)
 {
@@ -458,3 +462,208 @@ intset_subset(PG_FUNCTION_ARGS)
 
     PG_RETURN_BOOL(result);
 }
+
+
+PG_FUNCTION_INFO_V1(intset_intersect);
+
+Datum
+intset_intersect(PG_FUNCTION_ARGS)
+{
+    intSet *a = (intSet *) PG_GETARG_POINTER(0);
+    intSet *b = (intSet *) PG_GETARG_POINTER(1);
+
+    intSet *result;
+
+    int *temp = NULL;
+    int temp_len = 0;
+    int num_count = 0;
+    int a_index, b_index;
+
+    // alloc the memory for temp
+    if(a->array_size > b->array_size){
+        temp_len = b->array_size;
+    }
+    else{
+        temp_len = a->array_size;
+    }
+
+    // check if one of the set is null
+    if(temp_len == 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * 2);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * 2);
+
+        result->array_size = 0;
+        result->array[0] = -1;
+    }
+    else{
+        temp = (int *) palloc(sizeof(int) * (temp_len + 1));
+
+        a_index = 0;
+        b_index = 0;
+        // elog(NOTICE, "a size: %d, b size: %d, temp: %d", a->array_size, b->array_size, temp_len);
+        while (a_index < a->array_size && b_index < b->array_size && num_count < temp_len){
+            // elog(NOTICE, "a index: %d, b index: %d, temp: %d", a_index, b_index, num_count);
+            
+            // when element equal
+            if(a->array[a_index] == b->array[b_index]){
+                temp[num_count] = a->array[a_index];
+                num_count++;
+                a_index++;
+                b_index++;
+                // elog(NOTICE, "temp[]: %d", temp[num_count-1]);
+            }
+
+            // when a smaller than b
+            else if(a->array[a_index] < b->array[b_index]){
+                a_index++;
+                // elog(NOTICE, "a++ --> a: %d, b: %d", a->array[a_index], b->array[b_index]);
+            }
+
+            // when b smaller than a
+            else if(a->array[a_index] > b->array[b_index]){
+                b_index++;
+                // elog(NOTICE, "b++ --> a: %d, b: %d", a->array[a_index], b->array[b_index]);
+            }
+
+        }
+
+        // elog(INFO, "num account %d", num_count);
+
+        // save temp and output
+        // if no intersection
+        if(num_count == 0){
+            result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * 2);
+            SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * 2);
+
+            result->array_size = 0;
+            result->array[0] = -1;
+            
+        }
+        else{
+            result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * num_count);
+            SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * num_count);
+            result->array_size = num_count;
+            for(int i = 0; i < num_count; i++){
+                result->array[i] = temp[i];
+            }
+        }
+        //free memory
+        pfree(temp);
+    }
+
+    PG_RETURN_POINTER(result);
+}
+
+
+PG_FUNCTION_INFO_V1(intset_union);
+
+Datum
+intset_union(PG_FUNCTION_ARGS)
+{
+    intSet *a = (intSet *) PG_GETARG_POINTER(0);
+    intSet *b = (intSet *) PG_GETARG_POINTER(1);
+
+    intSet *result;
+
+    int *temp = NULL;
+    int temp_len = 0;
+    int num_count = 0;
+    int a_index, b_index;
+
+    // if there is empty set
+    if(a->array_size == 0 && b->array_size == 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * 2);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * 2);
+
+        result->array_size = 0;
+        result->array[0] = -1;
+    }
+
+    //when a is empty set, load b
+    else if(a->array_size == 0 && b->array_size != 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * b->array_size);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * b->array_size);
+
+        result->array_size = b->array_size;
+        for(int i = 0; i < result->array_size; i++){
+            result->array[i] = b->array[i];
+        }
+    }
+
+    //when b is empty set, load a
+    else if(a->array_size != 0 && b->array_size == 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * a->array_size);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * a->array_size);
+
+        result->array_size = a->array_size;
+        for(int i = 0; i < result->array_size; i++){
+            result->array[i] = a->array[i];
+        }
+    }
+
+    //else, merge two set
+    else{
+        temp_len = a->array_size + b->array_size;
+        temp = (int *) palloc(sizeof(int) * temp_len);
+
+        a_index = 0;
+        b_index = 0;
+
+        while(a_index < a->array_size && b_index < b->array_size){
+            //when equal
+            if(a->array[a_index] == b->array[b_index]){
+                temp[num_count] = a->array[a_index];
+                num_count++;
+                a_index++;
+                b_index++;
+            }
+
+            //if a smaller
+            else if(a->array[a_index] < b->array[b_index]){
+                temp[num_count] = a->array[a_index];
+                num_count++;
+                a_index++;
+            }
+
+            else if(a->array[a_index] < b->array[b_index]){
+                temp[num_count] = b->array[b_index];
+                num_count++;
+                b_index++;
+            }
+        }
+
+        //check if set have remain
+        if(a_index < a->array_size && b_index == b->array_size){
+            while (a_index < a->array_size){
+                temp[num_count] = a->array[a_index];
+                num_count++;
+                a_index++;
+            }
+            
+        }
+        else if(a_index == a->array_size && b_index < b->array_size){
+            while (b_index < b->array[b_index]){
+                temp[num_count] = b->array[b_index];
+                num_count++;
+                b_index++;
+            }
+        }
+
+        // load to result
+        result = (intSet *) palloc(VARHDRSZ * 2 + VARHDRSZ * num_count);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * num_count);
+
+        result->array_size = num_count;
+        for(int i = 0; i < num_count; i++){
+            result->array[i] = temp[i];
+        }
+
+        pfree(temp);
+    }
+
+
+    PG_RETURN_POINTER(result);
+}
+
+
+
