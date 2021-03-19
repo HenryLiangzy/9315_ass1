@@ -673,4 +673,104 @@ intset_union(PG_FUNCTION_ARGS)
 }
 
 
+PG_FUNCTION_INFO_V1(intset_disjunction);
 
+Datum
+intset_disjunction(PG_FUNCTION_ARGS)
+{
+    intSet *a = (intSet *) PG_GETARG_POINTER(0);
+    intSet *b = (intSet *) PG_GETARG_POINTER(1);
+
+    intSet *result;
+
+    int *temp = NULL;
+    int temp_len = a->array_size + b->array_size;
+    int num_count = 0;
+
+    // check if a && b are null
+    if(a->array_size == 0 && b->array_size == 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * 2);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * 2);
+
+        result->array_size = 0;
+        result->array[0] = -1;
+    }
+    // if a is null
+    else if(a->array_size == 0 && b->array_size != 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * b->array_size);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * b->array_size);
+
+        result->array_size = b->array_size;
+        for(int i = 0; i < result->array_size; i++){
+            result->array[i] = b->array[i];
+        }
+    }
+    //if b is null
+    else if(a->array_size != 0 && b->array_size == 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * a->array_size);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * a->array_size);
+
+        result->array_size = a->array_size;
+        for(int i = 0; i < result->array_size; i++){
+            result->array[i] = a->array[i];
+        }
+    }
+    // if both not empty, concate then merge and remove duplicate element
+    else{
+        temp = (int *) palloc(sizeof(int) * temp_len);
+
+        //concate two array together
+        for(int i = 0; i < a->array_size; i++){
+            temp[i] = a->array[i];
+        }
+        for(int i = 0; i < b->array_size; i++){
+            temp[a->array_size + i] = b->array[i];
+        }
+
+        // for(int i = 0; i < temp_len; i++){
+        //     elog(INFO, "%d", temp[i]);
+        // }
+
+        //merge the array
+        mergeSort(temp, 0, temp_len-1);
+
+        // loop to search if single element number
+        for (int i = 0; i < temp_len; i++){
+            if(i == temp_len - 1){
+                num_count++;
+            }
+            else if(temp[i] == temp[i+1]){
+                i++;
+            }
+            else{
+                num_count++;
+            }
+        }
+
+        elog(INFO, "temp len %d, num account %d", temp_len, num_count);
+        
+        // save to result
+        result = (intSet *) palloc(VARHDRSZ * 2 + VARHDRSZ * num_count);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * num_count);
+
+        result->array_size = num_count;
+        num_count = 0;
+        for (int i = 0; i < temp_len; i++){
+            if(i == temp_len - 1){
+                result->array[num_count] = temp[i];
+                num_count++;
+            }
+            else if (temp[i] == temp[i + 1]){
+                i++;
+            }
+            else{
+                result->array[num_count] = temp[i];
+                num_count++;
+            }
+        }
+        
+        pfree(temp);
+    }
+
+    PG_RETURN_POINTER(result);
+}
