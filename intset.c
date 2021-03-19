@@ -774,3 +774,73 @@ intset_disjunction(PG_FUNCTION_ARGS)
 
     PG_RETURN_POINTER(result);
 }
+
+
+PG_FUNCTION_INFO_V1(intset_difference);
+
+Datum
+intset_difference(PG_FUNCTION_ARGS)
+{
+    intSet *a = (intSet *) PG_GETARG_POINTER(0);
+    intSet *b = (intSet *) PG_GETARG_POINTER(1);
+
+    intSet *result;
+
+    int *temp = NULL;
+    int temp_len = a->array_size;
+    int num_count = 0;
+    int flag = 0;
+    
+    // if set a is null
+    if(a->array_size == 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * 2);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * 2);
+
+        result->array_size = 0;
+        result->array[0] = -1;
+    }
+    //if set b is null
+    else if(b->array_size == 0){
+        result = (intSet *)palloc(VARHDRSZ * 2 + VARHDRSZ * temp_len);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * temp_len);
+
+        result->array_size = a->array_size;
+        for(int i = 0; i < a->array_size; i++){
+            result->array[i] = a->array[i];
+        }
+    }
+    // if both of a and b have set
+    else{
+        //loop a array to check which not in b
+        temp = (int *) palloc(sizeof(int) * temp_len);
+        for (int i = 0; i < a->array_size; i++){
+            flag = 0;
+            for(int j = 0; j < b->array_size; j++){
+                // if b have that element, flag mark as 1
+                if(a->array[i] == b->array[j]){
+                    flag = 1;
+                }
+            }
+
+            // if b do not have current element, save to
+            if(flag == 0){
+                temp[num_count] = a->array[i];
+                num_count++;
+            }
+        }
+
+        //save to result
+        result = (intSet *) palloc(VARHDRSZ * 2 + VARHDRSZ * num_count);
+        SET_VARSIZE(result, VARHDRSZ * 2 + VARHDRSZ * num_count);
+
+        result->array_size = num_count;
+        for(int i = 0; i < num_count; i++){
+            result->array[i] = temp[i];
+        }
+
+        //free memory
+        pfree(temp);
+    }
+
+    PG_RETURN_POINTER(result);
+}
